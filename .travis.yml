@@ -1,29 +1,32 @@
 language: python
-
 jobs:
   include:
-    # perform a linux build
-    - services: docker
-    # and a mac build
-    - os: osx
-      language: shell
-    # and a windows build
-    - os: windows
-      language: shell
-      before_install:
-        - choco install python --version 3.8.0
-        - export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
-        # make sure it's on PATH as 'python3'
-        - ln -s /c/Python38/python.exe /c/Python38/python3.exe
-
+  - services: docker
+  - os: osx
+    language: shell
+  - os: windows
+    language: shell
+    before_install:
+    - choco install python --version 3.8.5
+    - export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
+    - ln -s /c/Python38/python.exe /c/Python38/python3.exe
 env:
   global:
-    # - TWINE_USERNAME=__token__
-    # Note: TWINE_PASSWORD is set to a PyPI API token in Travis settings
-
+  - CIBW_SKIP=cp27-*
+  - secure: TO8uOOmkvo3JgOTLQ7xepkJintzm997T9hOpFHaqvda94ETlP/+f7jaVr1aJ8NhDUCTv8WzS990HvEe7on9dI4aKPgRjCVv99FyHT3Xw1Snr6Azjc3lGJcEZ5hRLKr++MLrMUpvCt3Zyq9nIikAT6iYSKiluUlgfir8OTaP61weBhfswmSQAQE2qsdxXNBWu9lX2pQ7IdS+xDP/ziHvJPH4dzFC2FCW5QhdpQxX8cVjhYT2Wo2j5fo3av9fzulug9Apxin/Fub3qJ+p9egnWLR/3rpgA8mbWDwGL7QEm3B+OfqN+nCmo8kBFS3axByNFwb50cLRlFnaDIWs7YR5JHmST03HoRYSBnwWxpJ9vK0inThscLMx3zVKi86sqE/D3IggvJE4Rt0O6jBS1jMEKcQY2uFvBqVC2+FLsNOmzUmxUs91PzpIO6van+LhpvH7umRha18/TuJY4bGChuhH3PZ2Rd3Vgyg/udMa9tdi3T+/xFPz1MWdEp4EFhL7Qdqr+2eg663615EA4xmB703EBjizzT2RI9F2gAjqKnJiEphHIPy3fKHt0RKa7xPVr1t4E0Nsp+Bf7HopKyPz+/mqifOkZ3+RKiLfRfUvFa/6HeWDFrzDJWxeetI6f/BicQLG+Lf69c7ba0QfJzWgTgNbkvzg2ezD1xHTq4JygxMME6SU=
 install:
-  - python3 -m pip install cibuildwheel==1.6.4
-
+- python3 -m pip install cibuildwheel==1.6.4
 script:
-  # build the wheels, put them into './wheelhouse'
-  - python3 -m cibuildwheel --output-dir wheelhouse
+- python3 -m cibuildwheel --output-dir wheelhouse
+before_deploy:
+- git config --local user.name "Ryan Scovill"
+- git config --local user.email "ryans797@gmail.com"
+- export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)}
+- git tag $TRAVIS_TAG
+
+deploy:
+  provider: releases
+  api_key: GITHUB_TOKEN
+  file_glob: true
+  file: wheelhouse/*
+  skip_cleanup: true
